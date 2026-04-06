@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "npm install --prefix frontend/TSKB && npm run build --prefix frontend/TSKB",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
