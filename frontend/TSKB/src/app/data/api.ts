@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Get API base URL from environment variable, fall back to development default
+const baseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
+const API_URL = `${baseUrl}/api`;
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
