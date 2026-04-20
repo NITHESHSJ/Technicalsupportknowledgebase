@@ -203,7 +203,7 @@ export const TicketManagement: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-foreground">
-            {currentUser?.role === 'admin' ? 'Ticket Management' : 'My Support Tickets'}
+            {currentUser?.role === 'admin' ? 'Ticket Management' : 'Generate Tickets'}
           </h2>
           <p className="text-muted-foreground mt-1">
             {currentUser?.role === 'admin' 
@@ -438,14 +438,19 @@ export const TicketManagement: React.FC = () => {
                   <CardContent className="pt-6">
                     <div className="space-y-4">
                       <div>
-                        <h4 className="font-semibold text-foreground mb-3">Responses ({replies[ticket._id]?.length || 0})</h4>
+                        <h4 className="font-semibold text-foreground mb-3">
+                          {currentUser?.role === 'admin' ? 'Responses' : 'Admin Responses'} 
+                          ({(currentUser?.role === 'admin' ? replies[ticket._id] : replies[ticket._id]?.filter((r: any) => r.isAdminReply))?.length || 0})
+                        </h4>
                         {loadingReplies[ticket._id] ? (
                           <div className="text-sm text-muted-foreground text-center py-4">Loading responses...</div>
-                        ) : replies[ticket._id]?.length === 0 ? (
-                          <div className="text-sm text-muted-foreground text-center py-4">No responses yet</div>
+                        ) : (currentUser?.role === 'admin' ? replies[ticket._id] : replies[ticket._id]?.filter((r: any) => r.isAdminReply))?.length === 0 ? (
+                          <div className="text-sm text-muted-foreground text-center py-4">
+                            {currentUser?.role === 'admin' ? 'No responses yet' : 'No admin responses yet'}
+                          </div>
                         ) : (
                           <div className="space-y-3">
-                            {replies[ticket._id]?.map((reply: any) => (
+                            {(currentUser?.role === 'admin' ? replies[ticket._id] : replies[ticket._id]?.filter((r: any) => r.isAdminReply))?.map((reply: any) => (
                               <div key={reply._id} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                                 <div className="flex items-start justify-between mb-2">
                                   <div>
@@ -455,7 +460,7 @@ export const TicketManagement: React.FC = () => {
                                       {new Date(reply.createdAt).toLocaleString()}
                                     </p>
                                   </div>
-                                  {(currentUser?._id === reply.userId?._id || currentUser?.role === 'admin') && (
+                                  {currentUser?.role === 'admin' && (currentUser?._id === reply.userId?._id || currentUser?.role === 'admin') && (
                                     <Button 
                                       variant="ghost" 
                                       size="icon" 
@@ -473,24 +478,26 @@ export const TicketManagement: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Add Reply Form */}
-                      <div className="border-t pt-4 space-y-2">
-                        <Label htmlFor="reply">Add Response</Label>
-                        <Textarea
-                          id="reply"
-                          placeholder="Type your response..."
-                          value={replyMessage}
-                          onChange={(e) => setReplyMessage(e.target.value)}
-                          rows={3}
-                        />
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleAddReply(ticket._id)}
-                          disabled={!replyMessage.trim()}
-                        >
-                          Send Response
-                        </Button>
-                      </div>
+                      {/* Add Reply Form - Only for Admin */}
+                      {currentUser?.role === 'admin' && (
+                        <div className="border-t pt-4 space-y-2">
+                          <Label htmlFor="reply">Add Response</Label>
+                          <Textarea
+                            id="reply"
+                            placeholder="Type your response..."
+                            value={replyMessage}
+                            onChange={(e) => setReplyMessage(e.target.value)}
+                            rows={3}
+                          />
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleAddReply(ticket._id)}
+                            disabled={!replyMessage.trim()}
+                          >
+                            Send Response
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
