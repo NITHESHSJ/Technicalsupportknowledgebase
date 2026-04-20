@@ -26,20 +26,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
     }
   };
 
-  const quickLogin = async (role: 'admin' | 'user') => {
-    const credentials = {
-      admin: { email: 'nithesh.ec23@bitsathy.ac.in', password: 'admin123' },
-      user: { email: 'mike.w@company.com', password: 'user123' },
-    };
 
-    const cred = credentials[role];
-    setEmail(cred.email);
-    setPassword(cred.password);
-    const success = await login(cred.email, cred.password);
-    if (!success) {
-      setError('Quick login failed. Make sure the backend is running and the user exists.');
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
@@ -134,36 +121,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
               <Button type="submit" className="w-full">
                 Sign In
               </Button>
-
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-card text-muted-foreground">Quick Login (Demo)</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => quickLogin('admin')}
-                  className="text-xs"
-                >
-                  Admin
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => quickLogin('user')}
-                  className="text-xs"
-                >
-                  User
-                </Button>
-              </div>
 
               <div className="pt-2 text-center space-y-2">
                 <a href="#" className="block text-sm text-primary hover:underline">
