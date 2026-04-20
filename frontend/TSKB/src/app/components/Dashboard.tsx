@@ -146,21 +146,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onArticleSelect, onViewCha
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {currentUser?.role === 'admin' && (
-              <button 
-                onClick={() => onViewChange('articles')}
-                className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-left"
-              >
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">Create New Article</p>
-                  <p className="text-sm text-muted-foreground">Add a new support solution</p>
-                </div>
-              </button>
-            )}
-
             <button 
               onClick={() => onViewChange('tickets')}
               className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors text-left"

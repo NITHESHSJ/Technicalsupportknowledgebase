@@ -17,7 +17,7 @@ import {
 import { api } from '../data/api';
 import { useAuth } from '../context/AuthContext';
 import ReactMarkdown from 'react-markdown';
-import { Article, Category, mockCategories } from '../data/mockData';
+import { Article } from '../data/mockData';
 
 interface ArticleDetailProps {
   articleId: string;
@@ -27,6 +27,7 @@ interface ArticleDetailProps {
 export const ArticleDetail: React.FC<ArticleDetailProps> = ({ articleId, onBack }) => {
   const { currentUser } = useAuth();
   const [article, setArticle] = useState<Article | null>(null);
+  const [category, setCategory] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState('');
@@ -44,6 +45,16 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({ articleId, onBack 
           authorName: data.author?.name || 'Unknown'
         };
         setArticle(articleWithMappedAuthor);
+
+        // Fetch category if categoryId exists
+        if (data.categoryId) {
+          try {
+            const categoryData = await api.getCategory(data.categoryId);
+            setCategory(categoryData);
+          } catch (err) {
+            console.warn('Could not fetch category details:', err);
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch article:', error);
       } finally {
@@ -86,8 +97,6 @@ export const ArticleDetail: React.FC<ArticleDetailProps> = ({ articleId, onBack 
       </Card>
     );
   }
-
-  const category = mockCategories.find(c => c.id === article.categoryId);
 
   return (
     <div className="space-y-6">

@@ -31,8 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isO
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, roles: ['admin', 'user'] },
     { id: 'search', label: 'Search Articles', icon: Search, roles: ['admin', 'user'] },
-    { id: 'tickets', label: 'Tickets', icon: LifeBuoy, roles: ['admin', 'user'] },
-    { id: 'articles', label: 'Manage Articles', icon: BookOpen, roles: ['admin'] },
+    { id: 'tickets', label: 'Support Tickets', icon: LifeBuoy, roles: ['admin', 'user'] },
     { id: 'categories', label: 'Categories', icon: FolderTree, roles: ['admin', 'user'] },
     { id: 'feedback', label: 'Feedback & Ratings', icon: MessageSquare, roles: ['admin'] },
     { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3, roles: ['admin'] },

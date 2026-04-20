@@ -87,6 +87,50 @@ export const api = {
     return res.json();
   },
 
+  // Categories
+  getCategories: async () => {
+    const res = await fetch(`${API_URL}/categories`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch categories');
+    return res.json();
+  },
+
+  getCategory: async (id: string) => {
+    const res = await fetch(`${API_URL}/categories/${id}`, { headers: getHeaders() });
+    if (!res.ok) throw new Error('Failed to fetch category');
+    return res.json();
+  },
+
+  createCategory: async (categoryData: any) => {
+    const res = await fetch(`${API_URL}/categories`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(categoryData),
+    });
+    if (!res.ok) throw new Error('Failed to create category');
+    return res.json();
+  },
+
+  updateCategory: async (id: string, categoryData: any) => {
+    const res = await fetch(`${API_URL}/categories/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(categoryData),
+    });
+    if (!res.ok) throw new Error('Failed to update category');
+    return res.json();
+  },
+
+  deleteCategory: async (id: string) => {
+    const res = await fetch(`${API_URL}/categories/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to delete category');
+    }
+  },
+
   // Tickets
   createTicket: async (ticketData: any) => {
     const res = await fetch(`${API_URL}/tickets`, {
@@ -140,6 +184,42 @@ export const api = {
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
       throw new Error(errorData.message || 'Failed to delete ticket');
+    }
+  },
+
+  // Ticket Replies
+  addTicketReply: async (ticketId: string, message: string) => {
+    const res = await fetch(`${API_URL}/tickets/${ticketId}/replies`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ message }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to add reply');
+    }
+    return res.json();
+  },
+
+  getTicketReplies: async (ticketId: string) => {
+    const res = await fetch(`${API_URL}/tickets/${ticketId}/replies`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to fetch replies');
+    }
+    return res.json();
+  },
+
+  deleteTicketReply: async (replyId: string) => {
+    const res = await fetch(`${API_URL}/tickets/replies/${replyId}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to delete reply');
     }
   },
   

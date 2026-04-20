@@ -24,7 +24,10 @@ import {
   Search,
   Filter,
   Pencil,
-  Trash2
+  Trash2,
+  MessageCircle,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import {
   Dialog,
@@ -43,6 +46,10 @@ export const TicketManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
+  const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
+  const [replies, setReplies] = useState<{ [key: string]: any[] }>({});
+  const [replyMessage, setReplyMessage] = useState('');
+  const [loadingReplies, setLoadingReplies] = useState<{ [key: string]: boolean }>({});
 
   // Form state for new ticket
   const [formData, setFormData] = useState({
@@ -62,6 +69,18 @@ export const TicketManagement: React.FC = () => {
       console.error('Failed to fetch tickets:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchReplies = async (ticketId: string) => {
+    setLoadingReplies(prev => ({ ...prev, [ticketId]: true }));
+    try {
+      const ticketReplies = await api.getTicketReplies(ticketId);
+      setReplies(prev => ({ ...prev, [ticketId]: ticketReplies }));
+    } catch (error) {
+      console.error('Failed to fetch replies:', error);
+    } finally {
+      setLoadingReplies(prev => ({ ...prev, [ticketId]: false }));
     }
   };
 
@@ -114,6 +133,43 @@ export const TicketManagement: React.FC = () => {
       fetchTickets();
     } catch (error) {
       console.error('Failed to update ticket status:', error);
+    }
+  };
+
+  const handleExpandTicket = async (ticketId: string) => {
+    if (expandedTicketId === ticketId) {
+      setExpandedTicketId(null);
+    } else {
+      setExpandedTicketId(ticketId);
+      if (!replies[ticketId]) {
+        await fetchReplies(ticketId);
+      }
+    }
+  };
+
+  const handleAddReply = async (ticketId: string) => {
+    if (!replyMessage.trim()) {
+      alert('Reply message cannot be empty');
+      return;
+    }
+    try {
+      await api.addTicketReply(ticketId, replyMessage);
+      setReplyMessage('');
+      await fetchReplies(ticketId);
+      alert('Reply added successfully!');
+    } catch (error: any) {
+      alert(`Failed to add reply: ${error.message}`);
+    }
+  };
+
+  const handleDeleteReply = async (replyId: string, ticketId: string) => {
+    if (!window.confirm('Are you sure you want to delete this reply?')) return;
+    try {
+      await api.deleteTicketReply(replyId);
+      await fetchReplies(ticketId);
+      alert('Reply deleted successfully!');
+    } catch (error: any) {
+      alert(`Failed to delete reply: ${error.message}`);
     }
   };
 
@@ -268,96 +324,183 @@ export const TicketManagement: React.FC = () => {
       ) : (
         <div className="grid gap-4">
           {filteredTickets.map((ticket) => (
-            <Card key={ticket._id} className="overflow-hidden">
-              <div className="flex flex-col md:flex-row">
-                <div className="flex-1 p-6">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-mono text-muted-foreground">{ticket.ticketId}</span>
-                      {getStatusBadge(ticket.status)}
-                      {getPriorityBadge(ticket.priority)}
+            <div key={ticket._id}>
+              <Card className="overflow-hidden">
+                <div className="flex flex-col md:flex-row">
+                  <div className="flex-1 p-6">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-mono text-muted-foreground">{ticket.ticketId}</span>
+                        {getStatusBadge(ticket.status)}
+                        {getPriorityBadge(ticket.priority)}
+                      </div>
+                      {currentUser?.role === 'admin' && (
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-blue-600"
+                            onClick={() => handleEdit(ticket)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                            onClick={() => handleDelete(ticket._id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    {currentUser?.role === 'admin' && (
-                      <div className="flex gap-2">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">{ticket.title}</h3>
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{ticket.description}</p>
+                    
+                    <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        Created {new Date(ticket.createdAt).toLocaleDateString()}
+                      </span>
+                      {currentUser?.role === 'admin' && (
+                        <span className="flex items-center gap-1">
+                          <UserIcon className="w-4 h-4" />
+                          From: {ticket.userId?.name || 'Unknown'}
+                        </span>
+                      )}
+                      {ticket.assignedTo && (
+                        <span className="flex items-center gap-1">
+                          <UserIcon className="w-4 h-4 text-blue-500" />
+                          Assigned: {ticket.assignedTo.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {currentUser?.role === 'admin' && (
+                    <div className="bg-gray-50 border-t md:border-t-0 md:border-l p-6 w-full md:w-64 flex flex-col gap-3 justify-center">
+                      <Label className="text-xs uppercase text-muted-foreground font-bold">Update Status</Label>
+                      <div className="flex flex-col gap-2">
                         <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-blue-600"
-                          onClick={() => handleEdit(ticket)}
+                          size="sm" 
+                          variant={ticket.status === 'open' ? 'default' : 'outline'}
+                          onClick={() => handleUpdateStatus(ticket._id, 'open')}
+                          className="justify-start gap-2"
                         >
-                          <Pencil className="w-4 h-4" />
+                          <AlertCircle className="w-4 h-4" /> Open
                         </Button>
                         <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-red-600"
-                          onClick={() => handleDelete(ticket._id)}
+                          size="sm" 
+                          variant={ticket.status === 'in-progress' ? 'default' : 'outline'}
+                          onClick={() => handleUpdateStatus(ticket._id, 'in-progress')}
+                          className="justify-start gap-2"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Clock className="w-4 h-4" /> In Progress
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant={ticket.status === 'resolved' ? 'default' : 'outline'}
+                          onClick={() => handleUpdateStatus(ticket._id, 'resolved')}
+                          className="justify-start gap-2"
+                        >
+                          <CheckCircle className="w-4 h-4" /> Resolved
                         </Button>
                       </div>
-                    )}
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">{ticket.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{ticket.description}</p>
-                  
-                  <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      Created {new Date(ticket.createdAt).toLocaleDateString()}
-                    </span>
-                    {currentUser?.role === 'admin' && (
-                      <span className="flex items-center gap-1">
-                        <UserIcon className="w-4 h-4" />
-                        From: {ticket.userId?.name || 'Unknown'}
-                      </span>
-                    )}
-                    {ticket.assignedTo && (
-                      <span className="flex items-center gap-1">
-                        <UserIcon className="w-4 h-4 text-blue-500" />
-                        Assigned: {ticket.assignedTo.name}
-                      </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
-                {currentUser?.role === 'admin' && (
-                  <div className="bg-gray-50 border-t md:border-t-0 md:border-l p-6 w-full md:w-64 flex flex-col gap-3 justify-center">
-                    <Label className="text-xs uppercase text-muted-foreground font-bold">Update Status</Label>
-                    <div className="flex flex-col gap-2">
-                      <Button 
-                        size="sm" 
-                        variant={ticket.status === 'open' ? 'default' : 'outline'}
-                        onClick={() => handleUpdateStatus(ticket._id, 'open')}
-                        className="justify-start gap-2"
-                      >
-                        <AlertCircle className="w-4 h-4" /> Open
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant={ticket.status === 'in-progress' ? 'default' : 'outline'}
-                        onClick={() => handleUpdateStatus(ticket._id, 'in-progress')}
-                        className="justify-start gap-2"
-                      >
-                        <Clock className="w-4 h-4" /> In Progress
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant={ticket.status === 'resolved' ? 'default' : 'outline'}
-                        onClick={() => handleUpdateStatus(ticket._id, 'resolved')}
-                        className="justify-start gap-2"
-                      >
-                        <CheckCircle className="w-4 h-4" /> Resolved
-                      </Button>
+                {/* View Replies Button */}
+                <div className="border-t px-6 py-3 bg-gray-50">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="w-full justify-between text-left gap-2"
+                    onClick={() => handleExpandTicket(ticket._id)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      Responses
+                    </span>
+                    {expandedTicketId === ticket._id ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Replies Section */}
+              {expandedTicketId === ticket._id && (
+                <Card className="mt-0 rounded-t-none border-t-0">
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-foreground mb-3">Responses ({replies[ticket._id]?.length || 0})</h4>
+                        {loadingReplies[ticket._id] ? (
+                          <div className="text-sm text-muted-foreground text-center py-4">Loading responses...</div>
+                        ) : replies[ticket._id]?.length === 0 ? (
+                          <div className="text-sm text-muted-foreground text-center py-4">No responses yet</div>
+                        ) : (
+                          <div className="space-y-3">
+                            {replies[ticket._id]?.map((reply: any) => (
+                              <div key={reply._id} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div>
+                                    <p className="font-medium text-sm text-foreground">{reply.userId?.name || 'Unknown'}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {reply.isAdminReply && <span className="inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded mr-2">Admin</span>}
+                                      {new Date(reply.createdAt).toLocaleString()}
+                                    </p>
+                                  </div>
+                                  {(currentUser?._id === reply.userId?._id || currentUser?.role === 'admin') && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-6 w-6 text-muted-foreground hover:text-red-600"
+                                      onClick={() => handleDeleteReply(reply._id, ticket._id)}
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                                <p className="text-sm text-foreground">{reply.message}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add Reply Form */}
+                      <div className="border-t pt-4 space-y-2">
+                        <Label htmlFor="reply">Add Response</Label>
+                        <Textarea
+                          id="reply"
+                          placeholder="Type your response..."
+                          value={replyMessage}
+                          onChange={(e) => setReplyMessage(e.target.value)}
+                          rows={3}
+                        />
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleAddReply(ticket._id)}
+                          disabled={!replyMessage.trim()}
+                        >
+                          Send Response
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </Card>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           ))}
         </div>
       )}
     </div>
   );
 };
+
 

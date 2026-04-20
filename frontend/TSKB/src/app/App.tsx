@@ -8,7 +8,6 @@ import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { SearchArticles } from './components/SearchArticles';
 import { ArticleDetail } from './components/ArticleDetail';
-import { ManageArticles } from './components/ManageArticles';
 import { Categories } from './components/Categories';
 import { FeedbackRatings } from './components/FeedbackRatings';
 import { Analytics } from './components/Analytics';
@@ -58,8 +57,6 @@ const MainApp: React.FC = () => {
         return <SearchArticles onArticleSelect={handleArticleSelect} initialCategory={selectedCategoryId} />;
       case 'tickets':
         return <TicketManagement />;
-      case 'articles':
-        return <ManageArticles />;
       case 'categories':
         return <Categories onCategorySelect={handleCategorySelect} />;
       case 'feedback':

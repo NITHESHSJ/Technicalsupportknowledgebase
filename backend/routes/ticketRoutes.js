@@ -18,4 +18,14 @@ router.put('/:id', protect, authorize('admin'), ticketController.updateTicket);
 // Delete a ticket (Admin only)
 router.delete('/:id', protect, authorize('admin'), ticketController.deleteTicket);
 
+// Ticket Replies
+// Add reply to a ticket
+router.post('/:ticketId/replies', protect, ticketController.addReply);
+
+// Get replies for a ticket
+router.get('/:ticketId/replies', protect, ticketController.getTicketReplies);
+
+// Delete a reply
+router.delete('/replies/:replyId', protect, ticketController.deleteReply);
+
 module.exports = router;
